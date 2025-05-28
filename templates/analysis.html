@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SummIndex - Performance Analysis Interface</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f6fa; color: #333; }
+        
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center; }
+        .header h1 { font-size: 2rem; margin-bottom: 10px; }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        
+        .metric-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .metric-card h3 { color: #667eea; margin-bottom: 15px; font-size: 1.2rem; }
+        
+        .metric-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .metric-row:last-child { border-bottom: none; }
+        .metric-value { font-weight: bold; color: #2c3e50; }
+        .metric-good { color: #27ae60; }
+        .metric-warning { color: #f39c12; }
+        .metric-error { color: #e74c3c; }
+        
+        .table-container { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); overflow-x: auto; }
+        
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th, .data-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .data-table th { background: #f8f9fa; font-weight: 600; color: #2c3e50; }
+        .data-table tbody tr:hover { background: #f8f9fa; }
+        
+        .refresh-btn { position: fixed; bottom: 30px; right: 30px; background: #667eea; color: white; border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 1.5rem; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        
+        .status-indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
+        .status-good { background: #27ae60; }
+        .status-warning { background: #f39c12; }
+        .status-error { background: #e74c3c; }
+        
+        .chart-container { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 SummIndex Performance Analysis</h1>
+        <p>Real-time evaluation metrics and latency analysis</p>
+    </div>
+    
+    <div class="container">
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h3>🎯 Performance Targets</h3>
+                <div class="metric-row">
+                    <span>Latency Target (< 2.0s)</span>
+                    <span class="metric-value" id="latencyTarget">
+                        <span class="status-indicator" id="latencyStatus"></span>
+                        <span id="latencyValue">Loading...</span>
+                    </span>
+                </div>
+                <div class="metric-row">
+                    <span>Quality Target (≥ 94%)</span>
+                    <span class="metric-value" id="qualityTarget">
+                        <span class="status-indicator" id="qualityStatus"></span>
+                        <span id="qualityValue">Loading...</span>
+                    </span>
+                </div>
+                <div class="metric-row">
+                    <span>System Health</span>
+                    <span class="metric-value" id="systemHealth">Loading...</span>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>⚡ Latency Metrics</h3>
+                <div class="metric-row">
+                    <span>Average Latency</span>
+                    <span class="metric-value" id="avgLatency">Loading...</span>
+                </div>
+                <div class="metric-row">
+                    <span>Minimum Latency</span>
+                    <span class="metric-value" id="minLatency">Loading...</span>
+                </div>
+                <div class="metric-row">
+                    <span>Processing Cycles</span>
+                    <span class="metric-value" id="totalCycles">Loading...</span>
+                </div>
+                <div class="metric-row">
+                    <span>Uptime</span>
+                    <span class="metric-value" id="uptime">Loading...</span>
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>📈 Quality Metrics</h3>
+                <div class="metric-row">
+                    <span>Average Quality</span>
+                    <span class="metric-value" id="avgQuality">Loading...</span>
+                </div>
+                <div class="metric-row">
+                    <span>Maximum Quality</span>
+                    <span class="metric-value" id="maxQuality">Loading...</span>
+                </div>
+                <div class="metric-row">
+                    <span>Total Summaries</span>
+                    <span class="metric-value" id="totalSummaries">Loading...</span>
+                </div>
+                <div class="metric-row">
+                    <span>API Source</span>
+                    <span class="metric-value" id="apiSource">Loading...</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <h3>📋 Recent Processing Cycles</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Cycle #</th>
+                        <th>Timestamp</th>
+                        <th>Latency (s)</th>
+                        <th>Quality (%)</th>
+                        <th>Articles</th>
+                        <th>Summaries</th>
+                        <th>API Source</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="cycleDataTable">
+                    <tr><td colspan="8">Loading cycle data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="chart-container">
+            <h3>📊 Performance Trends</h3>
+            <p>Latency and quality trends over recent cycles</p>
+            <div id="trendsChart" style="height: 200px; display: flex; align-items: center; justify-content: center; color: #666;">
+                Performance visualization will be displayed here
+            </div>
+        </div>
+    </div>
+    
+    <button class="refresh-btn" onclick="refreshData()" title="Refresh Data">🔄</button>
+    
+    <script>
+        let refreshInterval;
+        
+        async function fetchData(endpoint) {
+            try {
+                const response = await fetch(endpoint);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error('Fetch error:', error);
+                return null;
+            }
+        }
+        
+        async function updateMetrics() {
+            try {
+                const data = await fetchData('/api/evaluation');
+                if (!data) return;
+                
+                const stats = data.detailed_metrics || {};
+                const summary = data.performance_summary || {};
+                
+                // Update target indicators
+                updateTargetStatus('latency', stats.latency_target_met, summary.average_latency, 's');
+                updateTargetStatus('quality', stats.quality_target_met, summary.average_quality * 100, '%');
+                
+                // Update latency metrics
+                document.getElementById('avgLatency').textContent = `${stats.avg_latency || 0}s`;
+                document.getElementById('minLatency').textContent = `${stats.min_latency || 0}s`;
+                document.getElementById('totalCycles').textContent = stats.total_cycles || 0;
+                document.getElementById('uptime').textContent = `${stats.uptime_hours || 0}h`;
+                
+                // Update quality metrics
+                document.getElementById('avgQuality').textContent = `${((stats.avg_quality || 0) * 100).toFixed(1)}%`;
+                document.getElementById('maxQuality').textContent = `${((stats.max_quality || 0) * 100).toFixed(1)}%`;
+                document.getElementById('totalSummaries').textContent = data.system_info?.total_summaries || 0;
+                
+                // Update API source
+                const usingReal = data.system_info?.using_real_apis;
+                document.getElementById('apiSource').textContent = usingReal ? 'Real APIs ✅' : 'Sample Data ⚠️';
+                document.getElementById('apiSource').className = `metric-value ${usingReal ? 'metric-good' : 'metric-warning'}`;
+                
+                // Update system health
+                const healthGood = stats.latency_target_met && stats.avg_quality > 0.9;
+                document.getElementById('systemHealth').textContent = healthGood ? 'Excellent ✅' : 'Good 📊';
+                document.getElementById('systemHealth').className = `metric-value ${healthGood ? 'metric-good' : 'metric-warning'}`;
+                
+                // Update cycles table
+                updateCyclesTable(stats.recent_cycles || []);
+                
+            } catch (error) {
+                console.error('Error updating metrics:', error);
+            }
+        }
+        
+        function updateTargetStatus(type, targetMet, value, unit) {
+            const statusElement = document.getElementById(`${type}Status`);
+            const valueElement = document.getElementById(`${type}Value`);
+            
+            statusElement.className = `status-indicator ${targetMet ? 'status-good' : 'status-warning'}`;
+            valueElement.textContent = `${value.toFixed(type === 'quality' ? 1 : 3)}${unit}`;
+            valueElement.className = `metric-value ${targetMet ? 'metric-good' : 'metric-warning'}`;
+        }
+        
+        function updateCyclesTable(cycles) {
+            const tableBody = document.getElementById('cycleDataTable');
+            
+            if (!cycles || cycles.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="8">No cycle data available</td></tr>';
+                return;
+            }
+            
+            tableBody.innerHTML = cycles.map(cycle => `
+                <tr>
+                    <td>#${cycle.cycle || 'N/A'}</td>
+                    <td>${new Date(cycle.timestamp).toLocaleTimeString()}</td>
+                    <td>${(cycle.latency || 0).toFixed(3)}</td>
+                    <td>${((cycle.quality || 0) * 100).toFixed(1)}%</td>
+                    <td>${cycle.articles || 0}</td>
+                    <td>${cycle.summaries || 0}</td>
+                    <td>${cycle.api_source || 'unknown'}</td>
+                    <td>
+                        <span class="status-indicator ${cycle.latency < 2.0 && cycle.quality > 0.9 ? 'status-good' : 'status-warning'}"></span>
+                        ${cycle.latency < 2.0 && cycle.quality > 0.9 ? 'Optimal' : 'Good'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function refreshData() {
+            updateMetrics();
+            
+            // Visual feedback
+            const btn = document.querySelector('.refresh-btn');
+            btn.style.transform = 'rotate(360deg)';
+            setTimeout(() => {
+                btn.style.transform = '';
+            }, 500);
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateMetrics();
+            refreshInterval = setInterval(updateMetrics, 10000); // Update every 10 seconds
+        });
+        
+        // Cleanup
+        window.addEventListener('beforeunload', function() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        });
+    </script>
+</body>
+</html>

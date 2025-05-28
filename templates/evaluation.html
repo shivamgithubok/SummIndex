@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SummIndex - Research Evaluation Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .metric-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .metric-card h3::before {
+            margin-right: 10px;
+            font-size: 1.5rem;
+        }
+        
+        .latency-card h3::before { content: "⚡"; }
+        .accuracy-card h3::before { content: "🎯"; }
+        .throughput-card h3::before { content: "📊"; }
+        .system-card h3::before { content: "🖥️"; }
+        
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .metric-item:last-child {
+            border-bottom: none;
+        }
+        
+        .metric-label {
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .metric-value {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .metric-value.good {
+            color: #27ae60;
+        }
+        
+        .metric-value.warning {
+            color: #f39c12;
+        }
+        
+        .metric-value.error {
+            color: #e74c3c;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #27ae60, #2ecc71);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .research-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .research-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        .research-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .research-table th,
+        .research-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .research-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .research-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .cycle-data {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .export-section {
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        .export-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: background 0.3s ease;
+        }
+        
+        .export-btn:hover {
+            background: #2980b9;
+        }
+        
+        .target-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 8px;
+        }
+        
+        .target-met {
+            background: #27ae60;
+        }
+        
+        .target-missed {
+            background: #e74c3c;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 SummIndex Research Evaluation Dashboard</h1>
+            <p>Comprehensive Performance Analysis & Research Metrics</p>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric-card latency-card">
+                <h3>Latency Analysis</h3>
+                <div class="metric-item">
+                    <span class="metric-label">Average Total Latency</span>
+                    <span class="metric-value" id="avgTotalLatency">Loading...</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Fetch Latency</span>
+                    <span class="metric-value" id="avgFetchLatency">Loading...</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Processing Latency</span>
+                    <span class="metric-value" id="avgProcessingLatency">Loading...</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Summarization Latency</span>
+                    <span class="metric-value" id="avgSummarizationLatency">Loading...</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Target Achievement (< 2.0s)</span>
+                    <span class="metric-value" id="latencyTargetMet">Loading...</span>
+                </div>
+            </div>
+            
+            <div class="metric-card accuracy-card">
+                <h3>Accuracy & Quality Analysis</h3>
+                <div class="metric-item">
+                    <span class="metric-label">Summary Quality Score</span>
+                    <span class="metric-value" id="summaryQuality">Loading...</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Relevance Score</span>
+                    <span class="metric-value" id="relevanceScore">Loading...</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Coherence Score</span>
+                    <span class="metric-value" id="coherenceScore">Loading...</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Target Achievement (> 94%)</span>
+                    <span class="metric-value" id="accuracyTargetMet">Loading...</span>
+                </div>
+            </div>
+            
+            <div class="metric-card throughput-card">
+                <h3>Throughput & Processing</h3>
+                <div class="metric-item">
+                    <span class="metric-label">Total Processing Cycles</span>
+                    <span class="metric-value" id="totalCycles">Loading...</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Success Rate</span>
+                    <span class="metric-value" id="successRate">Loading...</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Articles per Hour</span>
+                    <span class="metric-value" id="articlesPerHour">Loading...</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Summaries per Hour</span>
+                    <span class="metric-value" id="summariesPerHour">Loading...</span>
+                </div>
+            </div>
+            
+            <div class="metric-card system-card">
+                <h3>System Performance</h3>
+                <div class="metric-item">
+                    <span class="metric-label">System Uptime</span>
+                    <span class="metric-value" id="systemUptime">Loading...</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Average Memory Usage</span>
+                    <span class="metric-value" id="memoryUsage">Loading...</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Average CPU Usage</span>
+                    <span class="metric-value" id="cpuUsage">Loading...</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">System Health</span>
+                    <span class="metric-value" id="systemHealth">Loading...</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="research-section">
+            <h2>📈 Recent Processing Cycles (Research Data)</h2>
+            <div class="cycle-data">
+                <table class="research-table">
+                    <thead>
+                        <tr>
+                            <th>Cycle #</th>
+                            <th>Total Latency (s)</th>
+                            <th>Fetch Latency (s)</th>
+                            <th>Processing Latency (s)</th>
+                            <th>Summarization Latency (s)</th>
+                            <th>Articles Processed</th>
+                            <th>Summaries Generated</th>
+                            <th>Quality Score</th>
+                            <th>Success</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cycleDataTable">
+                        <tr>
+                            <td colspan="9" class="loading">Loading cycle data...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="research-section">
+            <h2>🎯 Performance Targets Summary</h2>
+            <div class="metric-item">
+                <span class="metric-label">Latency Target (< 2.0 seconds)</span>
+                <span class="metric-value" id="latencyTargetSummary">Loading...</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-label">Accuracy Target (> 94%)</span>
+                <span class="metric-value" id="accuracyTargetSummary">Loading...</span>
+            </div>
+            <div class="metric-item">
+                <span class="metric-label">Overall System Reliability</span>
+                <span class="metric-value" id="systemReliability">Loading...</span>
+            </div>
+        </div>
+        
+        <div class="export-section">
+            <h2>📊 Export Research Data</h2>
+            <p style="margin-bottom: 20px; color: #666;">Export comprehensive evaluation data for research paper analysis</p>
+            <button class="export-btn" onclick="exportMetrics()">Export Metrics JSON</button>
+            <button class="export-btn" onclick="exportFullData()">Export Full Dataset</button>
+            <button class="export-btn" onclick="generateReport()">Generate Research Report</button>
+        </div>
+    </div>
+    
+    <script>
+        let metricsData = {};
+        
+        async function fetchData(endpoint) {
+            try {
+                const response = await fetch(endpoint);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error('Fetch error:', error);
+                return null;
+            }
+        }
+        
+        async function updateMetrics() {
+            try {
+                const metrics = await fetchData('/evaluation/metrics');
+                if (!metrics) return;
+                
+                metricsData = metrics;
+                
+                // Update latency metrics
+                const latencyStats = metrics.statistical_analysis?.latency_metrics || {};
+                document.getElementById('avgTotalLatency').textContent = 
+                    `${latencyStats.total_cycle_latency?.avg || 0}s`;
+                document.getElementById('avgFetchLatency').textContent = 
+                    `${latencyStats.fetch_latency?.avg || 0}s`;
+                document.getElementById('avgProcessingLatency').textContent = 
+                    `${latencyStats.processing_latency?.avg || 0}s`;
+                document.getElementById('avgSummarizationLatency').textContent = 
+                    `${latencyStats.summarization_latency?.avg || 0}s`;
+                
+                const latencyTargetMet = latencyStats.latency_target_met;
+                const latencyElement = document.getElementById('latencyTargetMet');
+                latencyElement.textContent = latencyTargetMet ? 'Met ✓' : 'Not Met ✗';
+                latencyElement.className = `metric-value ${latencyTargetMet ? 'good' : 'error'}`;
+                
+                // Update accuracy metrics
+                const accuracyStats = metrics.statistical_analysis?.accuracy_metrics || {};
+                document.getElementById('summaryQuality').textContent = 
+                    `${((accuracyStats.summary_quality?.avg || 0) * 100).toFixed(1)}%`;
+                document.getElementById('relevanceScore').textContent = 
+                    `${((accuracyStats.relevance_score?.avg || 0) * 100).toFixed(1)}%`;
+                document.getElementById('coherenceScore').textContent = 
+                    `${((accuracyStats.coherence_score?.avg || 0) * 100).toFixed(1)}%`;
+                
+                const accuracyTargetMet = accuracyStats.accuracy_target_met;
+                const accuracyElement = document.getElementById('accuracyTargetMet');
+                accuracyElement.textContent = accuracyTargetMet ? 'Met ✓' : 'Not Met ✗';
+                accuracyElement.className = `metric-value ${accuracyTargetMet ? 'good' : 'error'}`;
+                
+                // Update throughput metrics
+                const throughputStats = metrics.statistical_analysis?.throughput_metrics || {};
+                document.getElementById('totalCycles').textContent = throughputStats.total_cycles || 0;
+                document.getElementById('successRate').textContent = 
+                    `${((throughputStats.success_rate || 0) * 100).toFixed(1)}%`;
+                document.getElementById('articlesPerHour').textContent = 
+                    throughputStats.articles_per_hour || 0;
+                document.getElementById('summariesPerHour').textContent = 
+                    throughputStats.summaries_per_hour || 0;
+                
+                // Update system metrics
+                const systemStats = metrics.statistical_analysis?.system_performance || {};
+                document.getElementById('systemUptime').textContent = 
+                    `${throughputStats.uptime_hours || 0}h`;
+                document.getElementById('memoryUsage').textContent = 
+                    `${systemStats.avg_memory_usage || 0}%`;
+                document.getElementById('cpuUsage').textContent = 
+                    `${systemStats.avg_cpu_usage || 0}%`;
+                document.getElementById('systemHealth').textContent = 
+                    systemStats.system_health || 'Unknown';
+                
+                // Update target summaries
+                document.getElementById('latencyTargetSummary').innerHTML = 
+                    `${latencyTargetMet ? 'Met' : 'Not Met'} <span class="target-indicator ${latencyTargetMet ? 'target-met' : 'target-missed'}"></span>`;
+                document.getElementById('accuracyTargetSummary').innerHTML = 
+                    `${accuracyTargetMet ? 'Met' : 'Not Met'} <span class="target-indicator ${accuracyTargetMet ? 'target-met' : 'target-missed'}"></span>`;
+                document.getElementById('systemReliability').textContent = 
+                    metrics.research_summary?.system_reliability || 'Unknown';
+                
+                // Update cycle data table
+                updateCycleDataTable(metrics.recent_cycles || []);
+                
+            } catch (error) {
+                console.error('Error updating metrics:', error);
+            }
+        }
+        
+        function updateCycleDataTable(cycleData) {
+            const tableBody = document.getElementById('cycleDataTable');
+            
+            if (!cycleData || cycleData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="9">No cycle data available</td></tr>';
+                return;
+            }
+            
+            tableBody.innerHTML = cycleData.map(cycle => `
+                <tr>
+                    <td>${cycle.cycle_number || 'N/A'}</td>
+                    <td>${cycle.total_latency || 'N/A'}</td>
+                    <td>${cycle.fetch_metrics?.fetch_latency?.toFixed(3) || 'N/A'}</td>
+                    <td>${cycle.processing_metrics?.processing_latency?.toFixed(3) || 'N/A'}</td>
+                    <td>${cycle.summarization_metrics?.summarization_latency?.toFixed(3) || 'N/A'}</td>
+                    <td>${cycle.processing_metrics?.articles_processed || 0}</td>
+                    <td>${cycle.summarization_metrics?.summaries_generated || 0}</td>
+                    <td>${((cycle.summarization_metrics?.summary_quality || 0) * 100).toFixed(1)}%</td>
+                    <td style="color: ${cycle.success ? '#27ae60' : '#e74c3c'}">${cycle.success ? '✓' : '✗'}</td>
+                </tr>
+            `).join('');
+        }
+        
+        async function exportMetrics() {
+            try {
+                const data = await fetchData('/evaluation/metrics');
+                if (data) {
+                    downloadJSON(data, 'summindex_research_metrics.json');
+                }
+            } catch (error) {
+                alert('Failed to export metrics: ' + error.message);
+            }
+        }
+        
+        async function exportFullData() {
+            try {
+                const data = await fetchData('/evaluation/export');
+                if (data && data.evaluation_data) {
+                    const blob = new Blob([data.evaluation_data], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'summindex_full_evaluation_data.json';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                }
+            } catch (error) {
+                alert('Failed to export full data: ' + error.message);
+            }
+        }
+        
+        function generateReport() {
+            if (!metricsData.statistical_analysis) {
+                alert('No data available for report generation');
+                return;
+            }
+            
+            const report = generateResearchReport(metricsData);
+            downloadText(report, 'summindex_research_report.txt');
+        }
+        
+        function downloadJSON(data, filename) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function downloadText(text, filename) {
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        function generateResearchReport(data) {
+            const stats = data.statistical_analysis;
+            return `
+SummIndex Real-Time News Summarization System
+Research Evaluation Report
+Generated: ${new Date().toISOString()}
+
+=== SYSTEM OVERVIEW ===
+Evaluation Period: ${data.research_summary?.evaluation_period || 'N/A'}
+Total Processing Cycles: ${stats?.throughput_metrics?.total_cycles || 0}
+System Reliability: ${data.research_summary?.system_reliability || 'N/A'}
+
+=== LATENCY PERFORMANCE ===
+Average Total Cycle Latency: ${stats?.latency_metrics?.total_cycle_latency?.avg || 0}s
+Average Fetch Latency: ${stats?.latency_metrics?.fetch_latency?.avg || 0}s
+Average Processing Latency: ${stats?.latency_metrics?.processing_latency?.avg || 0}s
+Average Summarization Latency: ${stats?.latency_metrics?.summarization_latency?.avg || 0}s
+Target Achievement (< 2.0s): ${stats?.latency_metrics?.latency_target_met ? 'MET' : 'NOT MET'}
+
+=== ACCURACY METRICS ===
+Average Summary Quality: ${((stats?.accuracy_metrics?.summary_quality?.avg || 0) * 100).toFixed(2)}%
+Average Relevance Score: ${((stats?.accuracy_metrics?.relevance_score?.avg || 0) * 100).toFixed(2)}%
+Average Coherence Score: ${((stats?.accuracy_metrics?.coherence_score?.avg || 0) * 100).toFixed(2)}%
+Target Achievement (> 94%): ${stats?.accuracy_metrics?.accuracy_target_met ? 'MET' : 'NOT MET'}
+
+=== THROUGHPUT ANALYSIS ===
+Total Articles Processed: ${stats?.throughput_metrics?.total_articles_processed || 0}
+Total Summaries Generated: ${stats?.throughput_metrics?.total_summaries_generated || 0}
+Processing Success Rate: ${((stats?.throughput_metrics?.success_rate || 0) * 100).toFixed(2)}%
+Articles per Hour: ${stats?.throughput_metrics?.articles_per_hour || 0}
+Summaries per Hour: ${stats?.throughput_metrics?.summaries_per_hour || 0}
+
+=== SYSTEM PERFORMANCE ===
+System Uptime: ${stats?.throughput_metrics?.uptime_hours || 0} hours
+Average Memory Usage: ${stats?.system_performance?.avg_memory_usage || 0}%
+Average CPU Usage: ${stats?.system_performance?.avg_cpu_usage || 0}%
+System Health Status: ${stats?.system_performance?.system_health || 'Unknown'}
+
+=== RESEARCH CONCLUSIONS ===
+The SummIndex system demonstrates ${data.performance_summary?.meets_latency_target ? 'successful' : 'partial'} achievement of latency targets
+and ${data.performance_summary?.meets_accuracy_target ? 'successful' : 'partial'} achievement of accuracy targets.
+Overall system health is rated as: ${data.performance_summary?.overall_health || 'Unknown'}
+
+This report provides comprehensive evaluation metrics suitable for research publication.
+            `.trim();
+        }
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            updateMetrics();
+            // Auto-refresh every 30 seconds
+            setInterval(updateMetrics, 30000);
+        });
+    </script>
+</body>
+</html>
