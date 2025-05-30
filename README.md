@@ -1,4 +1,4 @@
 # SummIndex
 hello
 create virtual environment
-by: create venv --name Summindex pythom==3.9
+by: create --name SummIndex pythom==3.9
