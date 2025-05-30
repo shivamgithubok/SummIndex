@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-"""
-Command Line Interface for SummIndex
-"""
-
 import asyncio
 import argparse
 import logging

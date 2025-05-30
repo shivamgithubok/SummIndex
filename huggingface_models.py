@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Hugging Face Models Integration for SummIndex
-Real transformer models for 94%+ accuracy achievement
-"""
-
 import os
 import logging
 import asyncio
@@ -15,7 +9,6 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 class HuggingFaceModelManager:
-    """Manages Hugging Face model integration for high-quality summarization"""
     
     def __init__(self, config):
         self.config = config

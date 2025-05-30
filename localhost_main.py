@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-SummIndex Localhost Version
-Complete setup for running on your PC with real Hugging Face models
-"""
-
 import os
 import sys
 import asyncio

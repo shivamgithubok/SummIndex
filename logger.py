@@ -1,6 +1,3 @@
-"""
-Centralized logging system for SummIndex
-"""
 import os
 import logging
 import sys

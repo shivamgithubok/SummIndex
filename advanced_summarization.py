@@ -9,9 +9,7 @@ import math
 
 logger = logging.getLogger(__name__)
 
-class AdvancedTextProcessor:
-    """Enhanced text processing for better summarization quality"""
-    
+class AdvancedTextProcessor:    
     def __init__(self):
         self.stop_words = {
             'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 

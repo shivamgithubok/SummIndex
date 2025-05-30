@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-SummIndex: Real-Time News Summarization System (Simplified Version)
-Main entry point for the application
-"""
-
 import asyncio
 import logging
 import signal

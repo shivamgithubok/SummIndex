@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""
-Localhost Setup Script for SummIndex
-Complete guide for running on your local PC/laptop
-"""
-
 import os
 import sys
 import subprocess

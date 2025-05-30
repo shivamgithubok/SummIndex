@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Real GNews API Integration for SummIndex
-Enhanced version with authentic news data fetching
-"""
-
 import asyncio
 import aiohttp
 import logging

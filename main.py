@@ -1,7 +1,3 @@
-"""
-SummIndex - Unified Real-Time News Summarization System
-Streamlined with LangChain, Real APIs, and Comprehensive Evaluation
-"""
 import asyncio
 from typing import Dict, Any
 from datetime import datetime
